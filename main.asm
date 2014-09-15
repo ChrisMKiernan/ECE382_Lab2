@@ -1,12 +1,14 @@
 ;-------------------------------------------------------------------------------
-; MSP430 Assembler Code Template for use with TI Code Composer Studio
-;
-;
+; ECE382 Lab2 - Subroutines and Cryptography
+; Chris Kiernan
+; This program decrypts a message that is stored in ROM by XORing the message with
+;	a key
 ;-------------------------------------------------------------------------------
             .cdecls C,LIST,"msp430.h"       ; Include device header file
 
 ;-------------------------------------------------------------------------------
             .text                           ; Assemble into program memory
+myMessage:	.byte
             .retain                         ; Override ELF conditional linking
                                             ; and retain current section
             .retainrefs                     ; Additionally retain any sections
@@ -23,6 +25,7 @@ StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
             ;
             ; load registers with necessary info for decryptMessage here
             ;
+			mov		#0xc000, r5
 
             call    #decryptMessage
 
@@ -47,7 +50,10 @@ forever:    jmp     forever
 ;-------------------------------------------------------------------------------
 
 decryptMessage:
-
+restartDecrypt
+			call	#decryptCharacter
+			cmp		r6, #0x8f
+			jnz		restartDecrypt
             ret
 
 ;-------------------------------------------------------------------------------
@@ -62,7 +68,8 @@ decryptMessage:
 ;-------------------------------------------------------------------------------
 
 decryptCharacter:
-
+			mov.b	@r5+, r6
+			xor		KEY, r6
             ret
 
 
