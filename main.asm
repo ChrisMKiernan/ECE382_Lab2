@@ -34,9 +34,9 @@ StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
 			mov		#0xc000, r5
 			mov		#0x0204, r6
 			mov		#0x0200, r7
-			mov.b	#0x23, 0(r7)
+			mov.b	#0xac, 0(r7)
 			mov.b	#0xdf, 1(r7)
-			mov.b	#0xac, 2(r7)
+			mov.b	#0x23, 2(r7)
 
             call    #decryptMessage
 
@@ -79,7 +79,7 @@ restartDecrypt
 ;-------------------------------------------------------------------------------
 
 decryptCharacter:
-			mov.b	#0x0200, r7
+			mov		#0x0200, r7
 restartChar
 			mov.b	@r5+, r10
 			xor.b	@r7+, r10
