@@ -8,7 +8,7 @@
 
 ;-------------------------------------------------------------------------------
             .text                           ; Assemble into program memory
-myMessage:	.byte
+myMessage:	.byte	0xf8,0xb7,0x46,0x8c,0xb2,0x46,0xdf,0xac,0x42,0xcb,0xba,0x03,0xc7,0xba,0x5a,0x8c,0xb3,0x46,0xc2,0xb8,0x57,0xc4,0xff,0x4a,0xdf,0xff,0x12,0x9a,0xff,0x41,0xc5,0xab,0x50,0x82,0xff,0x03,0xe5,0xab,0x03,0xc3,0xb1,0x4f,0xd5,0xff,0x40,0xc3,0xb1,0x57,0xcd,0xb6,0x4d,0xdf,0xff,0x4f,0xc9,0xab,0x57,0xc9,0xad,0x50,0x80,0xff,0x53,0xc9,0xad,0x4a,0xc3,0xbb,0x50,0x80,0xff,0x42,0xc2,0xbb,0x03,0xdf,0xaf,0x42,0xcf,0xba,0x50,0x8f
             .retain                         ; Override ELF conditional linking
                                             ; and retain current section
             .retainrefs                     ; Additionally retain any sections
@@ -24,8 +24,19 @@ StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
 
             ;
             ; load registers with necessary info for decryptMessage here
-            ;
+            ; Use the following registers:
+            ; r5: memory pointer to read encrypted message
+            ; r6: memory pointer to write decrypted message
+            ; r7: memory pointer to key
+            ; r15: counter, keeps track of how long the message is
+			mov		PC, r15
+			bic		#0xc000, r15
 			mov		#0xc000, r5
+			mov		#0x0204, r6
+			mov		#0x0200, r7
+			mov.b	#0x23, 0(r7)
+			mov.b	#0xdf, 1(r7)
+			mov.b	#0xac, 2(r7)
 
             call    #decryptMessage
 
@@ -52,7 +63,7 @@ forever:    jmp     forever
 decryptMessage:
 restartDecrypt
 			call	#decryptCharacter
-			cmp		r6, #0x8f
+			cmp		#0, r15
 			jnz		restartDecrypt
             ret
 
@@ -68,8 +79,17 @@ restartDecrypt
 ;-------------------------------------------------------------------------------
 
 decryptCharacter:
-			mov.b	@r5+, r6
-			xor		KEY, r6
+			mov.b	#0x0200, r7
+restartChar
+			mov.b	@r5+, r10
+			xor.b	@r7+, r10
+			mov.b	r10, 0(r6)
+			inc		r6
+			dec		r15
+			cmp		#0, r15
+			jz		forever
+			cmp		#0x0203, r7
+			jnz		restartChar
             ret
 
 
